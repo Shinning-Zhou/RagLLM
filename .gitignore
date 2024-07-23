@@ -1,0 +1,149 @@
+# specify files and directories to be ignored by git
+chromadb/
+RAG_大数据实践课题操作文档.ipynb
+HuggingFace-LLM_简单使用示范.ipynb
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+bower_components/
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+env/
+venv/
+ENV/
+VENV/
+*.pyc
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Ruby
+*.gem
+*.rbc
+*.rbenv-gemsets
+
+# IDEs and editors
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/
+*.code-workspace
+
+# JetBrains
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.csproj.user
+*.rsuser
+*.suo
+*.user
+*.cache
+*.pdb
+*.obj
+*.exe
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.project
+.classpath
+.cproject
+.settings/
+.apt_generated/
+.factorypath
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+*.bak
+
+# Environment files
+.env
+.env.*
+.env.local
+
+# Build artifacts
+/dist/
+/build/
+/out/
+
+# Coverage
+coverage/
+*.lcov
+
+# Package managers
+npm-debug.log
+yarn-debug.log
+pnpm-debug.log
+
+# Operating system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local configuration files
+*.local
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Ignoring binaries
+*.exe
+*.dll
+*.so
+*.dylib
