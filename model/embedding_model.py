@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 class EmbeddingModel(Embeddings):
     def __init__(self):
         super().__init__()
-        device_name = "cuda:2"  # Specify a GPU to use
+        device_name = "cuda:4"  # Specify a GPU to use
         self.device = torch.device(device_name)
 
         model_path = "/data1n1/"
