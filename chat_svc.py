@@ -1,20 +1,20 @@
+from typing import Callable, AsyncIterator
+import os
+import json
+import pandas as pd
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, StreamingResponse
+from langchain.schema import messages_to_dict
 from langchain_core.output_parsers import StrOutputParser
+from langchain_community.vectorstores import Chroma
+from langchain_community.chat_message_histories import ChatMessageHistory
+
 from model.chat_model import ChatModel
 from model.embedding_session import EmbeddingSession
 from UI.item import Dialog
 from common.chain_utils import rag_history_chain, intent_history_chain
-from langchain_community.vectorstores import Chroma
-from langchain_community.chat_message_histories import ChatMessageHistory
-from typing import Callable, AsyncIterator
-import os
-import json
-from langchain.schema import messages_to_dict
-import pandas as pd
 
 app = FastAPI()
-
 
 class ChatService:
     def __init__(self):
@@ -133,8 +133,3 @@ async def session_list():
 async def session_show(session_id: str):
     dicts = chat_svc.show_chat_history(session_id)
     return JSONResponse(dicts)
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="127.0.0.1", port=8000)
