@@ -31,138 +31,94 @@ from langchain_core.messages import BaseMessage, AIMessage, AIMessageChunk
 from UI.api import send_request
 
 
-class ChatModel(BaseChatModel):
+class CompeletionModel(BaseChatModel):
     device_name: str = Field(
-        "cuda:3", description="Name of the device to run the model."
+        "cuda:2", description="运行设备"
     )
-    model_name: str = Field("Llama2/Llama-2-7b-hf", description="Name of the model.")
+    model_name: str = Field("Llama2/Llama-2-7b-hf", description="模型名称")
 
     # model_name: str = Field("qwen/Qwen-7B-Chat", description="Name of the model.")
-    model: HuggingFacePipeline = Field(
-        None, description="Hugging Face pipeline for chat model."
-    )
-    tokenizer: AutoTokenizer = Field(None, description="Tokenizer for the model.")
+    model: AutoModelForCausalLM = Field(None, description="模型")
+    tokenizer: AutoTokenizer = Field(None, description="分词器")
 
     model_kwargs: Dict = Field(
         None,
-        description="Keyword arguments for the model's generate method.",
+        description="为模型添加的额外参数，例如max_new_tokens, repetition_penalty, do_sample, early_stopping",
     )
 
     class Config:
-        """Configuration for this pydantic object."""
+        """pydantic设置."""
 
         allow_population_by_field_name = True
 
     def __init__(self, **kwargs):
         super().__init__()
+        # 加载模型路径和设备
         model_path = "/data1n1/"
         self.device_name = "cuda:3"
-
         # self.model_name = "Llama2/Llama-2-7b-hf"
         # self.model_name = "Llama2/Llama-2-7b-chat-hf"
         # self.model_name = "mistral-7B-v0.1"
         # self.model_name = "Mistral-7B-Instruct-v0.1"
         self.model_name = "Qwen2-7B-Instruct"
 
-
+        # 加载模型和分词器
         self.tokenizer = AutoTokenizer.from_pretrained(model_path + self.model_name, trust_remote_code=True)
-
-        # self.model = AutoModelForCausalLM.from_pretrained(
-        #     model_path + self.model_name,
-        #     output_hidden_states=True,
-        #     output_attentions=True,
-        #     torch_dtype=torch.float16,
-        #     device_map=self.device_name,
-        #     trust_remote_code=True
-        # )
-        # self.model_kwargs = {
-        #     "max_new_tokens": 128,
-        #     "repetition_penalty": 1.5,
-        #     "do_sample": True,
-        #     "early_stopping": True,
-        # }
-        
-        # def token_generator(query: str) -> List[int]:
-        #     inputs = self.tokenizer(query, return_tensors="pt").to(self.device_name)
-        #     return inputs['input_ids'].squeeze().tolist()
-        pipeline = transformers.pipeline(
-            'text-generation',
-            model=model_path + self.model_name,
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_path + self.model_name,
+            output_hidden_states=True,
+            output_attentions=True,
             torch_dtype=torch.float16,
-            device_map='auto',
-            tokenizer=self.tokenizer,
-            trust_remote_code=True,
-            max_new_tokens=128,
-            repetition_penalty=1.15,
-            do_sample=True,
-            )
-        self.model = HuggingFacePipeline(pipeline=pipeline)
+            device_map=self.device_name,
+            trust_remote_code=True
+        )
+        self.model_kwargs = {
+            "max_new_tokens": 128,  # 最大生成长度
+            "repetition_penalty": 1.5,  # 重复惩罚
+            "do_sample": True,  # 使用采样
+            "early_stopping": True,  # 早停，由于beams参数默认为1，当生成重复片段超过1时，会停止生成。
+        }
+        
     @property
     def _llm_type(self) -> str:
-        """Return type of llm."""
+        """返回语言模型类型"""
         return self.model_name
 
     @torch.inference_mode()
-    def _generate(
+    def _call(
         self,
         messages: List[BaseMessage],
         stop: Optional[List[str]] = None,
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
-    ) -> ChatResult:
+    ) -> str:
+        """该函数是对 langchain chat 模型的封装，为固定接口"""
         query = messages[-1].content
         inputs = self.tokenizer(query, return_tensors="pt").to(self.device_name)
         token_n = self.tokenizer.encode(query, return_tensors="pt").shape[1]
         generated_ids = self.model.generate(**inputs, **self.model_kwargs)
         output = self.tokenizer.batch_decode(generated_ids[:, token_n:])[0].strip()
 
-        message = AIMessage(
-            content=output,
-            additional_kwargs={},  # 用于添加额外的有效负载（例如，函数调用请求）
-            response_metadata={  # 用于响应元数据
-                "time_in_seconds": 3,
-            },
-        )
-        generation = ChatGeneration(message=message)
-        return ChatResult(generations=[generation])
+        return output
 
     @torch.inference_mode()
-    async def _agenerate(
+    async def _acall(
         self,
         messages: List[BaseMessage],
         stop: Optional[List[str]] = None,
         run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
         **kwargs: Any,
-    ) -> ChatResult:
+    ) -> str:
+        """异步版本的_call，用于支持ainvoke，为固定接口"""
         query = messages[-1].content
         inputs = self.tokenizer(query, return_tensors="pt").to(self.device_name)
         token_n = self.tokenizer.encode(query, return_tensors="pt").shape[1]
         generated_ids = await self.model.agenerate(**inputs, **self.model_kwargs)
         output = self.tokenizer.batch_decode(generated_ids[:, token_n:])[0].strip()
 
-        message = AIMessage(
-            content=output,
-            additional_kwargs={},  # 用于添加额外的有效负载（例如，函数调用请求）
-            response_metadata={  # 用于响应元数据
-                "time_in_seconds": 3,
-            },
-        )
-        generation = ChatGeneration(message=message)
-        return ChatResult(generations=[generation])
+        return output
 
-    # def stream_thr(self, inputs, streamer: TextIteratorStreamer, **kwargs: Any):
-    #     with torch.no_grad():
-    #         outputs = self.model.chat(
-    #             inputs.input_ids,
-    #             pad_token_id=self.tokenizer.eos_token_id,
-    #             **kwargs
-    #             )
-    #     return self.tokenizer.decode(
-    #         outputs[0],
-    #         streamer=streamer,
-    #         skip_special_tokens=True
-    #         )
-
+    # 流式传输，使用分线程实现
     @torch.inference_mode()
     def _stream(
         self,
@@ -171,6 +127,8 @@ class ChatModel(BaseChatModel):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
+        """流式推理接口，返回生成的结果，为固定接口"""
+        
         query = messages[-1].content
         inputs = self.tokenizer(query, return_tensors="pt").to(self.device_name)
         token_n = self.tokenizer.encode(query, return_tensors="pt").shape[1]
@@ -187,21 +145,17 @@ class ChatModel(BaseChatModel):
             if token_cnt >= 1024:
                 print('reach max token cnt')
                 break
-            # chunk = chunk.replace(self.tokenizer.bos_token, "")
-            # chunk = chunk.replace(self.tokenizer.eos_token, "")
             if chunk and token_cnt >= token_n:
                 # print(f"content: {chunk}")
                 yield ChatGenerationChunk(message=AIMessageChunk(content=chunk))
-                if run_manager:
-                    run_manager.on_llm_new_token(query, chunk=chunk)
 
         chunk = ChatGenerationChunk(
             message=AIMessageChunk(content="", response_metadata={"time_in_sec": 3})
         )
 
-        if run_manager:
-            run_manager.on_llm_new_token(query, chunk=chunk)
 
+    # 由于分线程写异步流比较麻烦，因此暂时不支持异步流
+    # @torch.inference_mode()
     # async def _astream(
     #     self,
     #     messages: List[BaseMessage],
@@ -232,3 +186,26 @@ class ChatModel(BaseChatModel):
 
     #     if run_manager:
     #         run_manager.on_llm_new_token(query, chunk=chunk)
+
+if __name__ == "__main__":
+    """
+    简单测试，需要实现的效果如下：
+    1. 测试接口正常
+    2. 输出结果开头不能包含输入（不然这里做rag会出问题）
+    3. 要有对话的效果
+    """
+    model = CompeletionModel()
+
+    # 测试同步接口
+    print(model.invoke("你好"))
+
+    # 测试异步接口
+    asyncio.run(model.ainvoke("你好"))
+
+    # 测试流式接口
+    for chunk in model.stream("你好"):
+        print(chunk)
+
+    # 测试异步流式接口
+    # async for chunk in model.astream("你好"):
+    #     print(chunk)
