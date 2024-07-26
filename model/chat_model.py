@@ -19,7 +19,7 @@ from langchain_core.messages import AIMessageChunk
 
 class ChatModel(LLM):
     device_name: str = Field(
-        "cuda:3", description="Name of the device to run the model."
+        "cuda:2", description="Name of the device to run the model."
     )
     model_name: str = Field("qwen/Qwen-7B-Chat", description="Name of the model.")
 
