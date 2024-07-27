@@ -9,7 +9,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores import Chroma
 from langchain_community.chat_message_histories import ChatMessageHistory
 
-from model.chat_model import ChatModel
+from model.qwen import ChatModel
 from model.embedding_session import EmbeddingSession
 from UI.item import Dialog
 from common.chain_utils import rag_history_chain, intent_history_chain
