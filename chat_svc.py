@@ -30,7 +30,7 @@ class ChatService:
                 persist_directory=f"{(os.path.dirname(__file__))}/chromadb",
             ),
             "表情包": Chroma(
-                "team_d_emoji",
+                "team_d",
                 embedding_function=self.embed,
                 persist_directory=f"{(os.path.dirname(__file__))}/emoji_chromadb",
             ),

@@ -11,6 +11,7 @@ if "dir_path" not in st.session_state:
 
 _query = st.chat_input("输入问题")
 _intent = st.selectbox('意图', ['问答', '表情包'])
+_search_type = st.selectbox('搜索类型', ['similarity', 'mmr'], index=1)
 _dir_path = st.text_input("目录路径", value=st.session_state["dir_path"])
 
 if os.path.isdir(_dir_path):
@@ -26,7 +27,7 @@ if _query:
     resp = send_request(
             "embedding/query",
             port=8002,
-            json=Query(query=_query,intent=_intent).model_dump(),
+            json=Query(query=_query,intent=_intent, search_type=_search_type).model_dump(),
             method="POST",
         ).json()
     st.write(f'{_intent}:\n')
