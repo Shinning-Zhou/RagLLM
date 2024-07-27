@@ -1,4 +1,6 @@
 #!/bin/bash
+export LANGCHAIN_TRACING_V2=true
+export LANGCHAIN_API_KEY=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
 export TZ='Asia/Shanghai'
 DATE=$(date +'%Y%m%d_%H%M%S')
 

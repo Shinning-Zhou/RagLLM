@@ -9,9 +9,10 @@ import pandas as pd
 if "dir_path" not in st.session_state:
     st.session_state["dir_path"] = os.getcwd()
 
-_query = st.chat_input("Query")
-_intent = st.selectbox('Intent', ['问答', '表情包'])
-_dir_path = st.text_input("Directory Path", value=st.session_state["dir_path"])
+_query = st.chat_input("输入问题")
+_intent = st.selectbox('意图', ['问答', '表情包'])
+_dir_path = st.text_input("目录路径", value=st.session_state["dir_path"])
+
 if os.path.isdir(_dir_path):
     st.session_state["dir_path"] = _dir_path
     files = [os.path.join(_dir_path, file) for file in os.listdir(_dir_path)]
@@ -19,7 +20,7 @@ else:
     files = []
 st.table(files)
 
-_upload_btn = st.button("Upload")
+_upload_btn = st.button("嵌入该目录内容")
 
 if _query:
     resp = send_request(
@@ -52,7 +53,7 @@ if _query:
 if _upload_btn:
     upload_packet = UploadPacket(dir_path=_dir_path)
 
-    st.write("response from server:")
+    st.write("服务器的回复:")
     if _intent == '问答':
         st.write(
             "pdf:\n",
@@ -61,6 +62,6 @@ if _upload_btn:
     
     elif _intent == '表情包':
         st.write(
-            "image:\n",
+            "图片:\n",
             send_request("database/img", port=8002, json=upload_packet.model_dump(), method="POST").json()
         )

@@ -18,10 +18,12 @@ app = FastAPI()
 
 class ChatService:
     def __init__(self):
-        self.llm = ChatModel()
-        self.embed = EmbeddingSession()
+        self.llm = ChatModel()  # 对话模型
+        self.embed = EmbeddingSession()  # 嵌入模型
 
-        self.vdb = {
+        os.makedirs(f"{(os.path.dirname(__file__))}/chromadb", exist_ok=True)
+        os.makedirs(f"{(os.path.dirname(__file__))}/emoji_chromadb", exist_ok=True)
+        self.vdb = {  # 设置向量数据库
             "问答": Chroma(
                 "team_d",
                 embedding_function=self.embed,
@@ -30,24 +32,25 @@ class ChatService:
             "表情包": Chroma(
                 "team_d_emoji",
                 embedding_function=self.embed,
-                persist_directory=f"{(os.path.dirname(__file__))}/chromadb",
+                persist_directory=f"{(os.path.dirname(__file__))}/emoji_chromadb",
             ),
         }
 
-        self.retriver = {k: v.as_retriever() for k, v in self.vdb.items()}
+        self.retriver = {k: v.as_retriever(search_type = "mmr") for k, v in self.vdb.items()}  # langchain检索器
 
-        self._store_cache_ = {}
-        self.rag_chain = intent_history_chain(
+        self._store_cache_ = {}  # 历史记录缓存
+        self.rag_chain = intent_history_chain(  # 获取意图链
             self.llm, self.retriver, history_load=self.warp_task()
         )
 
     def warp_task(self) -> Callable[[str], ChatMessageHistory]:
-        def task(session_id: str):
+        """封装历史记录生成函数"""
+        def task(session_id: str):  # 输入会话id，返回对话记录类ChatMessageHistory
             if session_id not in self._store_cache_:
                 self._store_cache_[session_id] = ChatMessageHistory()
 
             chat_history = self._store_cache_[session_id]
-            if len(chat_history.messages) >= 6:
+            if len(chat_history.messages) >= 6:  # 只取最后3对问答
                 chat_history.messages = chat_history.messages[-6:]
             return chat_history
 
@@ -56,32 +59,35 @@ class ChatService:
     def show_chat_history(
         self, session_id: str
     ):
+        """返回对话历史记录"""
         if session_id not in self._store_cache_:
-            return {}
+            return {}  # 没有对话历史就返回空字典
         dicts = [
             (i, json.dumps(d))
             for i, d in enumerate(messages_to_dict(self._store_cache_[session_id].messages))
         ]
         return {session_id:dicts}
-        
-
+    
 
 async def split_stream(chunk_stream: AsyncIterator):
+    """
+    对异步返回的数据做格式化
+    """
     async for chunk in chunk_stream:
         print(chunk)
         for key in chunk:
-            if key == "answer":
+            if key == "answer":  # 回答文本
                 yield f"answer|{chunk[key]}"
-            elif key == "context":
+            elif key == "context":  # 参考文献
                 for d in chunk[key]:
                     yield f"context|{json.dumps({'metadata': d.metadata,'page_content': d.page_content}, ensure_ascii=False)}"
-            else:
-                yield f"{key}|{json.dumps(chunk[key], ensure_ascii=False)}"
+            else:  # 其他记录
+                try:
+                    yield f"{key}|{json.dumps(chunk[key], ensure_ascii=False)}"
+                except:
+                    continue
 
-
-chat_svc = ChatService()
-llm = chat_svc.llm
-
+chat_svc = ChatService()  # 实例化
 
 @app.get("/")
 async def root():
@@ -90,32 +96,34 @@ async def root():
 
 @app.post("/rag")
 async def rag(dialog: Dialog):
-    rag_chain = chat_svc.rag_chain
-    stream = rag_chain.astream(
-        {"input": dialog.message},
+    """进行rag问答"""
+    rag_chain = chat_svc.rag_chain  # 使用rag链
+    stream = rag_chain.astream(  # 异步流式返回
+        {"input": dialog.message},  # 输入
         config={
             "configurable": {
-                "session_id": dialog.session_id,
+                "session_id": dialog.session_id,  # 会话id，用于获取历史记录
             }
         },
     )
     return StreamingResponse(
         split_stream(stream),
-        media_type="text/event-stream",
+        media_type="text/event-stream",  # 流式返回文本
     )
-    # return JSONResponse(chat_svc.embed.embed_query(dialog.message))
 
 
 @app.post("/query")
 async def query(msg: str):
-    resp = (llm | StrOutputParser()).astream(msg)
+    """进行普通llm问答"""
+    resp = (chat_svc.llm | StrOutputParser()).astream(msg)  # 流式异步返回问答
     return StreamingResponse(
         resp,
         media_type="text/event-stream",
     )
 
 @app.delete("/session/{session_id}")
-async def session_list(session_id: str):
+async def delete_session(session_id: str):
+    """删除对话历史"""
     try:
         chat_svc._store_cache_.pop(session_id)
         return JSONResponse({"message": "session deleted"})
@@ -124,6 +132,7 @@ async def session_list(session_id: str):
     
 @app.get("/session")
 async def session_list():
+    """获取所有对话历史长度"""
     session_list = {}
     for k in chat_svc._store_cache_:
         session_list[k] = len(chat_svc.show_chat_history(k))
@@ -131,5 +140,6 @@ async def session_list():
 
 @app.get("/session/{session_id}")
 async def session_show(session_id: str):
+    """查看会话id对应的对话历史记录"""
     dicts = chat_svc.show_chat_history(session_id)
     return JSONResponse(dicts)

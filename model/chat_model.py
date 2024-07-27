@@ -99,7 +99,7 @@ class ChatModel(LLM):
         stop: Optional[List[str]] = None,
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any
-    ) -> Generator[ChatGenerationChunk, None]:
+    ) -> Generator[ChatGenerationChunk, None, None]:
         """流式推理接口，返回生成的结果，为固定接口"""
         response = self.model.chat_stream(
             self.tokenizer, prompt, [], stream=True
