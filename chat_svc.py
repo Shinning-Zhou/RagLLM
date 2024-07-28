@@ -18,7 +18,7 @@ app = FastAPI()
 
 class ChatService:
     def __init__(self):
-        self.llm = get_chat_model("qwen2")
+        self.llm = get_chat_model("qwen")
         self.embed = EmbeddingSession()
 
         os.makedirs(f"{(os.path.dirname(__file__))}/chromadb", exist_ok=True)

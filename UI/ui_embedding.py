@@ -88,8 +88,9 @@ with upload_tab:
                 
                 st.success(retriever.add_documents(docs))
     
-    if cols[1].button("Delete all documents",use_container_width=True):
+    if cols[1].button("删除向量数据库",use_container_width=True):
         rmtree(vdb_path)
+        st.rerun()
     
 with query_tab:
     query = st.chat_input("Enter query")
