@@ -1,3 +1,6 @@
+## 环境
+conda create -f team_d.yaml # 环境配置文件
+
 ## 使用方法
 ```bash
 conda activate team_d # 激活环境
@@ -5,6 +8,10 @@ cd /home/team_d/src # 进入项目目录
 /bin/bash start.sh # 启动服务器与前端框架， ctrl + c 退出
 ```
 启动服务后，打开浏览器访问 http://localhost:8000/ 即可进入聊天界面。（如果不行，需要进行端口转发，将远程机的 8000 端口转发到本地机）
+
+## bug QA
+- 前端无法正常显示图片？
+    - 请将本地8002端口映射到远程8002端口。
 
 ## 目录结构
 - UI/ # 前端框架

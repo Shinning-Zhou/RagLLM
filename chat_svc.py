@@ -16,6 +16,7 @@ from common.chain_utils import rag_history_chain, intent_history_chain
 
 app = FastAPI()
 
+
 class ChatService:
     def __init__(self):
         self.llm = get_chat_model("qwen")
@@ -36,7 +37,9 @@ class ChatService:
             ),
         }
 
-        self.retriver = {k: v.as_retriever(search_type = "mmr") for k, v in self.vdb.items()}  # langchain检索器
+        self.retriver = {
+            k: v.as_retriever(search_type="mmr") for k, v in self.vdb.items()
+        }  # langchain检索器
 
         self._store_cache_ = {}  # 历史记录缓存
         self.rag_chain = intent_history_chain(  # 获取意图链
@@ -45,6 +48,7 @@ class ChatService:
 
     def warp_task(self) -> Callable[[str], ChatMessageHistory]:
         """封装历史记录生成函数"""
+
         def task(session_id: str):  # 输入会话id，返回对话记录类ChatMessageHistory
             if session_id not in self._store_cache_:
                 self._store_cache_[session_id] = ChatMessageHistory()
@@ -55,19 +59,19 @@ class ChatService:
             return chat_history
 
         return task
-    
-    def show_chat_history(
-        self, session_id: str
-    ):
+
+    def show_chat_history(self, session_id: str):
         """返回对话历史记录"""
         if session_id not in self._store_cache_:
             return {}  # 没有对话历史就返回空字典
         dicts = [
             (i, json.dumps(d))
-            for i, d in enumerate(messages_to_dict(self._store_cache_[session_id].messages))
+            for i, d in enumerate(
+                messages_to_dict(self._store_cache_[session_id].messages)
+            )
         ]
-        return {session_id:dicts}
-    
+        return {session_id: dicts}
+
 
 async def split_stream(chunk_stream: AsyncIterator):
     """
@@ -85,9 +89,11 @@ async def split_stream(chunk_stream: AsyncIterator):
                 try:
                     yield f"{key}|{json.dumps(chunk[key], ensure_ascii=False)}"
                 except:
-                    continue
+                    yield str(chunk[key])
+
 
 chat_svc = ChatService()  # 实例化
+
 
 @app.get("/")
 async def root():
@@ -121,6 +127,7 @@ async def query(msg: str):
         media_type="text/event-stream",
     )
 
+
 @app.delete("/session/{session_id}")
 async def delete_session(session_id: str):
     """删除对话历史"""
@@ -129,7 +136,8 @@ async def delete_session(session_id: str):
         return JSONResponse({"message": "session deleted"})
     except KeyError:
         return JSONResponse({"message": "session not found"})
-    
+
+
 @app.get("/session")
 async def session_list():
     """获取所有对话历史长度"""
@@ -137,6 +145,7 @@ async def session_list():
     for k in chat_svc._store_cache_:
         session_list[k] = len(chat_svc.show_chat_history(k))
     return JSONResponse(session_list)
+
 
 @app.get("/session/{session_id}")
 async def session_show(session_id: str):
