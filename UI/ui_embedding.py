@@ -28,7 +28,7 @@ def get_splitter(chunk_size, chunk_overlap, keep_separator, separators, strip_wh
 
 with st.expander("模型配置", expanded=False):
     device_name = st.selectbox("Select device", ["cuda:0", "cuda:2", "cuda:4"])
-    model_name = st.selectbox("Select model", ["Mistral-7B-Instruct-v0.1"])
+    model_name = st.selectbox("Select model", ["Mistral-7B-Instruct-v0.1", "mistral-7B-v0.1","llava-v1.5-7b", "Llama2/Llama-2-7b-chat-hf"])
     vdb_path = st.text_input("Enter path to VDB", value=(os.path.abspath(f"{ROOT}/../chromadb/")))
     search_type = st.selectbox('搜索类型', ['similarity', 'mmr'], index=1)
 os.makedirs(vdb_path, exist_ok=True)
