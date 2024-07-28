@@ -11,9 +11,9 @@ import torch
 import asyncio
 
 
-class Qwen2(LLM):
-    model_name: str = "Qwen2-7B-Instruct/"
-    model_path: str = "/data1n1/Qwen2-7B-Instruct/"
+class Mistral(LLM):
+    model_name: str = "Mistral-7B-Instruct-v0.1"
+    model_path: str = "/data1n1/Mistral-7B-Instruct-v0.1/"
     device: torch.device = torch.device('cuda:0')
     tokenizer: AutoTokenizer = None
     model: AutoModelForCausalLM = None
@@ -31,8 +31,9 @@ class Qwen2(LLM):
     def _prepare_messages(self, prompt: str) -> List[dict]:
         """准备消息格式。"""
         return [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": "I need help with my order"},
+            {"role": "assistant", "content": "you are a helpful assistant"},
+            {"role": "user", "content": prompt},
         ]
 
     def _generate_text(self, model_inputs) -> str:
@@ -47,6 +48,7 @@ class Qwen2(LLM):
               stop: Optional[List[str]] = None,
               run_manager: Optional[CallbackManagerForLLMRun] = None,
               **kwargs: Any) -> str:
+        """同步调用接口"""
         messages = self._prepare_messages(prompt)
         text = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         model_inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
@@ -115,7 +117,7 @@ class Qwen2(LLM):
 if __name__ == "__main__":
     import asyncio
     # 创建模型实例
-    model = Qwen2()
+    model = Mistral()
 
     # 测试 _call 方法
     prompt = "你好！"

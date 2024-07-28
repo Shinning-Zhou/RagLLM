@@ -29,13 +29,6 @@ class EmbeddingModel(Embeddings):
 
         ## Push the GPT model to GPU:
         self.model.to(device_name, dtype=torch.float16)
-    
-    def generate_response(self, query: str):
-        with torch.no_grad():
-            inputs = self.tokenizer(query, return_tensors="pt").to(self.device)
-            outputs = self.model.generate(**inputs, max_length=200)
-            answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return answer
 
     def get_hidden_states(self, text:str) -> List[torch.Tensor]:
         with torch.no_grad():
@@ -59,3 +52,26 @@ class EmbeddingModel(Embeddings):
     def __del__(self):
         del self.model
         del self.tokenizer
+        
+        
+def test_embed_query():
+    model = EmbeddingModel()
+    query = "Machine learning is fascinating."
+    embedding = model.embed_query(query)
+    print("Embedding length:", len(embedding))
+    print("Embedding sample:", embedding[:5])  # Print the first 5 elements
+
+def test_embed_documents():
+    model = EmbeddingModel()
+    documents = [
+        "Artificial intelligence is the future.",
+        "Natural language processing is a subfield of AI."
+    ]
+    embeddings = model.embed_documents(documents)
+    print("Number of document embeddings:", len(embeddings))
+    print("Shape of first document embedding:", len(embeddings[0]))
+
+# test
+if __name__ == "__main__":
+    test_embed_query()
+    test_embed_documents()
