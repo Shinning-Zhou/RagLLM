@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 from typing import List
 from langchain_core.embeddings import Embeddings
+
 from UI.api import send_request
 from UI.item import Query
 

@@ -91,3 +91,26 @@ class EmbeddingModel(Embeddings):
         """
         del self.model
         del self.tokenizer
+        
+        
+def test_embed_query():
+    model = EmbeddingModel()
+    query = "Machine learning is fascinating."
+    embedding = model.embed_query(query)
+    print("Embedding length:", len(embedding))
+    print("Embedding sample:", embedding[:5])  # Print the first 5 elements
+
+def test_embed_documents():
+    model = EmbeddingModel()
+    documents = [
+        "Artificial intelligence is the future.",
+        "Natural language processing is a subfield of AI."
+    ]
+    embeddings = model.embed_documents(documents)
+    print("Number of document embeddings:", len(embeddings))
+    print("Shape of first document embedding:", len(embeddings[0]))
+
+# test
+if __name__ == "__main__":
+    test_embed_query()
+    test_embed_documents()
