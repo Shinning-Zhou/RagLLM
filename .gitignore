@@ -1,7 +1,9 @@
 # specify files and directories to be ignored by git
 chromadb/
+emoji_chromadb/
 RAG_大数据实践课题操作文档.ipynb
 HuggingFace-LLM_简单使用示范.ipynb
+model_download.py
 
 # macOS
 .DS_Store

@@ -5,17 +5,18 @@ from langchain_core.prompts import MessagesPlaceholder
 from pydantic import BaseModel, Field
 
 class Intent(BaseModel):
+    """意图"""
     name: str = Field(..., title="意图名称")
     description: str = Field(..., title="意图描述")
     prompt_template: str = Field(..., title="意图模板")
 
-chat_intent = Intent(
+chat_intent = Intent(  # 聊天意图
     name="聊天",
     description="回答一般性问题",
     prompt_template="""{input}"""
 )
 
-rag_intent = Intent(
+rag_intent = Intent(  # 问答意图
     name="问答",
     description="回答具体问题",
     prompt_template="""你是一位非常聪明的助手。
@@ -26,7 +27,7 @@ rag_intent = Intent(
     {input}"""
 )
 
-emoji_intent = Intent(
+emoji_intent = Intent(  # 表情包意图
     name="表情包",
     description="回答表情包相关问题",
     prompt_template="""你是一位追逐潮流的年轻人。
@@ -38,7 +39,7 @@ emoji_intent = Intent(
     请帮他找到对应的表情包"""
 )
 
-router_prompt = PromptTemplate.from_template(
+router_prompt = PromptTemplate.from_template(  # 路由模板，用来识别意图
     f"""
     你是一位非常聪明的助手，你擅长识别问题的主题。
     你只能从 聊天 问答 表情包 这三个主题中回答问题。
@@ -62,7 +63,7 @@ router_prompt = PromptTemplate.from_template(
     """
 )
 
-contextualize_q_system_prompt = (
+contextualize_q_system_prompt = (  # 总结模板，让大模型能根据对话历史和问题，生成问题来检索参考资料
     """
     给定聊天历史记录和最新用户的问题，问题可能引用聊天历史记录中的上下文。
     形成独立的问题，无需聊天历史记录即可理解。
@@ -73,14 +74,14 @@ contextualize_q_system_prompt = (
 
 contextualize_q_prompt = ChatPromptTemplate.from_messages(  # 对话提示词
     [
-        ("system", contextualize_q_system_prompt),
-        MessagesPlaceholder("chat_history"),
-        ("human", "{input}"),
+        ("system", contextualize_q_system_prompt),  # 放模板
+        MessagesPlaceholder("chat_history"),  # 放对话历史
+        ("human", "{input}"),  # 放问题
     ]
 )
 
 
-system_prompt = (
+system_prompt = (  # 对话提示词
     """
     你是一名助手
     请使用以下检索到的上下文来回答问题
